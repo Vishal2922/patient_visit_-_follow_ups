@@ -19,7 +19,7 @@ $count_res = mysqli_query($conn, $count_sql);
 $total_visits = mysqli_fetch_assoc($count_res)['total'];
 $total_pages = ceil($total_visits / $limit);
 
-//  MAIN DATA QUERY 
+//  MAIN DATA QUERY also inclded the search & sort
 $sql = "SELECT v.*, p.name, p.phone,
         DATEDIFF(CURDATE(), v.visit_date) AS days_since,
         (v.consultation_fee + v.lab_fee) AS total_bill,

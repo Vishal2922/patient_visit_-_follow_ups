@@ -57,7 +57,7 @@ $patient = mysqli_fetch_assoc(mysqli_query($conn, "SELECT name FROM patients WHE
         <p><?= $summary_res['span_days'] ?> <span style="font-size: 0.9rem; font-weight: normal;">Days</span></p>
     </div>
     <div class="stat-card">
-        <h4>Lifetime Revenue</h4>
+        <h4>Lifetime Spent</h4>
         <p>$<?= number_format($data['total_spent'] ?? 0, 2) ?></p>
     </div>
 </div>
