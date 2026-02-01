@@ -5,48 +5,42 @@ $error = "";
 $input = ['username' => '', 'name' => '', 'phone' => '', 'dob' => '', 'address' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
     $input['username'] = mysqli_real_escape_string($conn, $_POST['username']);
     $input['name'] = mysqli_real_escape_string($conn, $_POST['name']);
     $input['phone'] = mysqli_real_escape_string($conn, $_POST['phone']);
     $input['dob'] = mysqli_real_escape_string($conn, $_POST['dob']);
     $input['address'] = mysqli_real_escape_string($conn, $_POST['address']);
     
-   
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
+    // NEW: Hash the password
+    $plain_password = $_POST['password']; 
+    $hashed_password = password_hash($plain_password, PASSWORD_DEFAULT);
+    
     $today = date('Y-m-d');
 
-
+    // Validation
     $check_user = mysqli_query($conn, "SELECT username FROM users WHERE username = '{$input['username']}'");
-    
-    
     $password_pattern = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/';
 
-    if (empty($input['username']) || empty($password)) {
-        $error = "Clinical Error: Account credentials are required.";
-    } elseif (mysqli_num_rows($check_user) > 0) {
-        $error = "System Error: The username '{$input['username']}' is already taken.";
-    } elseif (!preg_match($password_pattern, $password)) {
-        $error = "Security Error: Password must be 8+ characters and include uppercase, lowercase, a number, and a special character (@$!%*?&).";
-    } elseif ($input['dob'] > $today) {
-        $error = "Clinical Error: Date of Birth cannot be in the future.";
+    if (mysqli_num_rows($check_user) > 0) {
+        $error = "Error: Username already taken.";
+    } elseif (!preg_match($password_pattern, $plain_password)) {
+        $error = "Security Error: Password must be 8+ characters with Upper, Lower, Number, and Symbol.";
     } else {
+        // INSERT Patient
         $p_sql = "INSERT INTO patients (name, phone, dob, address, join_date) 
                   VALUES ('{$input['name']}', '{$input['phone']}', '{$input['dob']}', '{$input['address']}', '$today')";
         
         if (mysqli_query($conn, $p_sql)) {
-            // GET THE UNIQUE ID AND SYNC WITH USER TABLE
             $new_patient_id = mysqli_insert_id($conn);
 
+            // Use the $hashed_password here
             $u_sql = "INSERT INTO users (username, password, role, patient_id) 
-                      VALUES ('{$input['username']}', '$password', 'patient', $new_patient_id)";
+                      VALUES ('{$input['username']}', '$hashed_password', 'patient', $new_patient_id)";
             
             if (mysqli_query($conn, $u_sql)) {
                 header("Location: login.php?msg=signup_success");
                 exit();
             }
-        } else {
-            $error = "Database Error: " . mysqli_error($conn);
         }
     }
 }
